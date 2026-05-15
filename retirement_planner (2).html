@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retirement Income Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0C2340;--blue:#1A5FA8;--teal:#0A6E56;--amber:#8C4F00;--red:#9B1C1C;--gold:#C4922A;--bg:#F7F4EE;--bg2:#EDE9E0;--border:#D4CFC4;--text:#1A1916;--muted:#6B6760;--white:#FFFFFF;--lgreen:#E4F4EE;--lamber:#FBF0DC;--lred:#FCEAEA;--lblue:#E4EEF9;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+#gate{position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;align-items:center;justify-content:center;padding:2rem;}
+#gate::before{content:'';position:absolute;top:-100px;left:-100px;width:500px;height:500px;background:radial-gradient(circle,rgba(196,146,42,.12) 0%,transparent 65%);pointer-events:none;}
+.gate-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:2.5rem 2.75rem;max-width:400px;width:100%;text-align:center;position:relative;z-index:1;}
+.gate-icon{font-size:2rem;margin-bottom:1rem;display:block;}
+.gate-title{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--white);margin-bottom:.4rem;font-weight:600;}
+.gate-sub{font-size:.78rem;color:rgba(255,255,255,.4);margin-bottom:2rem;line-height:1.5;}
+.gate-input-wrap input{width:100%;padding:12px 16px;font-family:'DM Mono',monospace;font-size:1rem;letter-spacing:.15em;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:9px;color:var(--white);outline:none;text-align:center;transition:border-color .2s;margin-bottom:1rem;}
+.gate-input-wrap input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(196,146,42,.15);}
+.gate-input-wrap input.error{border-color:#E24B4A;animation:shake .35s ease;}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.gate-btn{width:100%;padding:12px;background:var(--gold);color:var(--navy);border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;}
+.gate-btn:hover{background:#D4A030;}
+.gate-error{font-size:.75rem;color:#E87070;margin-top:.6rem;min-height:18px;}
+.gate-footer{font-size:.68rem;color:rgba(255,255,255,.2);margin-top:2rem;}
+#app{display:none;}
+.header{background:var(--navy);padding:2rem 2.5rem 0;position:relative;overflow:hidden;}
+.header::before{content:'';position:absolute;top:-60px;right:-60px;width:300px;height:300px;background:radial-gradient(circle,rgba(196,146,42,.15) 0%,transparent 70%);pointer-events:none;}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+.header-title h1{font-family:'Playfair Display',serif;font-size:1.75rem;color:var(--white);font-weight:700;letter-spacing:-.02em;line-height:1.2;}
+.header-title p{font-size:.8rem;color:rgba(255,255,255,.5);margin-top:4px;font-weight:300;letter-spacing:.04em;text-transform:uppercase;}
+.header-stats{display:flex;gap:1.5rem;flex-wrap:wrap;}
+.hstat{text-align:right;}
+.hstat .val{font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--gold);font-weight:500;}
+.hstat .lbl{font-size:.7rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em;}
+.tabs{display:flex;gap:0;border-top:1px solid rgba(255,255,255,.1);}
+.tab-btn{padding:.85rem 1.75rem;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;color:rgba(255,255,255,.5);background:none;border:none;cursor:pointer;letter-spacing:.03em;border-bottom:2px solid transparent;transition:all .2s;text-transform:uppercase;}
+.tab-btn:hover{color:rgba(255,255,255,.8);}
+.tab-btn.active{color:var(--white);border-bottom-color:var(--gold);}
+.main{max-width:1100px;margin:0 auto;padding:2rem 1.5rem;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+.input-panel{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;}
+.input-panel-title{font-family:'Playfair Display',serif;font-size:1rem;color:var(--navy);margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.input-panel-title::before{content:'';width:3px;height:16px;background:var(--gold);border-radius:2px;display:inline-block;}
+.inputs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;}
+.input-group{display:flex;flex-direction:column;gap:5px;}
+.input-group label{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.input-group .sub-label{font-size:.68rem;color:var(--muted);opacity:.7;margin-top:-3px;}
+.input-wrap{position:relative;display:flex;align-items:center;}
+.input-wrap .prefix{position:absolute;left:10px;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);pointer-events:none;}
+.input-wrap input{width:100%;padding:8px 10px 8px 22px;font-family:'DM Mono',monospace;font-size:.9rem;font-weight:500;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:7px;outline:none;transition:border-color .15s,box-shadow .15s;}
+.input-wrap input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,95,168,.08);background:var(--white);}
+.input-wrap.no-prefix input{padding-left:10px;}
+.section-title{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.alert{border-radius:8px;padding:.9rem 1.1rem;font-size:.85rem;line-height:1.6;margin-bottom:1rem;}
+.alert.warn{background:var(--lamber);color:var(--amber);border-left:3px solid var(--amber);}
+.alert.info{background:var(--lblue);color:var(--blue);border-left:3px solid var(--blue);}
+.alert.good{background:var(--lgreen);color:var(--teal);border-left:3px solid var(--teal);}
+.alert.bad{background:var(--lred);color:var(--red);border-left:3px solid var(--red);}
+.alert strong{font-weight:600;}
+.metrics-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.25rem;}
+.metric-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem;}
+.metric-card .m-label{font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.metric-card .m-value{font-family:'DM Mono',monospace;font-size:1.2rem;font-weight:500;color:var(--text);line-height:1.1;}
+.metric-card .m-sub{font-size:.7rem;color:var(--muted);margin-top:3px;}
+.metric-card.highlight{background:var(--navy);border-color:var(--navy);}
+.metric-card.highlight .m-label{color:rgba(255,255,255,.5);}
+.metric-card.highlight .m-value{color:var(--gold);}
+.metric-card.highlight .m-sub{color:rgba(255,255,255,.4);}
+.metric-card.danger{border-color:var(--red);background:var(--lred);}
+.metric-card.danger .m-value,.val-red{color:var(--red)!important;}
+.metric-card.good-card{border-color:var(--teal);background:var(--lgreen);}
+.metric-card.good-card .m-value,.val-teal{color:var(--teal)!important;}
+.val-amber{color:var(--amber)!important;}
+.val-blue{color:var(--blue)!important;}
+.phase-strip{display:flex;border-radius:10px;overflow:hidden;margin-bottom:1rem;border:1px solid var(--border);}
+.phase-cell{flex:1;padding:12px 8px;text-align:center;border-right:1px solid rgba(255,255,255,.2);}
+.phase-cell:last-child{border-right:none;}
+.phase-cell .pc-label{font-size:.65rem;opacity:.75;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em;}
+.phase-cell .pc-val{font-family:'DM Mono',monospace;font-size:.95rem;font-weight:500;}
+.phase-cell .pc-sub{font-size:.6rem;opacity:.7;margin-top:3px;}
+.data-table-wrap{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1.25rem;}
+.data-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+.data-table th{background:var(--navy);color:rgba(255,255,255,.85);font-weight:500;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;padding:9px 14px;text-align:left;}
+.data-table th.right{text-align:right;}
+.data-table td{padding:8px 14px;border-bottom:1px solid var(--bg2);color:var(--text);font-family:'DM Mono',monospace;font-size:.8rem;}
+.data-table td.label-col{font-family:'DM Sans',sans-serif;color:var(--muted);font-size:.8rem;}
+.data-table td.right{text-align:right;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:nth-child(even) td{background:var(--bg);}
+.pill{display:inline-block;font-size:.68rem;padding:2px 8px;border-radius:20px;font-family:'DM Sans',sans-serif;font-weight:600;}
+.pill-green{background:var(--lgreen);color:var(--teal);}
+.pill-amber{background:var(--lamber);color:var(--amber);}
+.pill-red{background:var(--lred);color:var(--red);}
+.pill-blue{background:var(--lblue);color:var(--blue);}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;}
+.compare-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1.1rem;}
+.compare-card.best{border-color:var(--teal);border-width:2px;}
+.compare-card.worst{border-color:var(--red);border-width:2px;}
+.compare-card .cc-title{font-family:'Playfair Display',serif;font-size:.95rem;color:var(--navy);margin-bottom:2px;}
+.compare-card .cc-sub{font-size:.72rem;color:var(--muted);margin-bottom:10px;}
+.cc-row{display:flex;justify-content:space-between;align-items:center;font-size:.8rem;padding:5px 0;border-bottom:1px solid var(--bg2);}
+.cc-row:last-child{border-bottom:none;}
+.cc-row .cc-k{color:var(--muted);}
+.cc-row .cc-v{font-family:'DM Mono',monospace;font-weight:500;color:var(--text);}
+.decision-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:10px;}
+.decision-card.urgent{border-left:3px solid var(--red);border-radius:0 10px 10px 0;}
+.decision-card.medium{border-left:3px solid var(--amber);border-radius:0 10px 10px 0;}
+.decision-card.low{border-left:3px solid var(--teal);border-radius:0 10px 10px 0;}
+.d-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+.d-title{font-size:.88rem;font-weight:600;color:var(--navy);}
+.d-body{font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:10px;}
+.d-amounts{display:flex;gap:1.5rem;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--bg2);}
+.d-amt .lbl{font-size:.68rem;color:var(--muted);}
+.d-amt .val{font-size:1rem;font-weight:600;font-family:'DM Mono',monospace;color:var(--text);}
+.fee-big-number{font-family:'Playfair Display',serif;font-size:3rem;color:var(--white);line-height:1;margin:.5rem 0;}
+.fee-big-number span{color:var(--gold);}
+.fee-scenario-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.fee-scenario{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1.1rem;}
+.fee-scenario.rec{border-color:var(--teal);border-width:2px;}
+.fee-scenario .fs-tag{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+.fee-scenario .fs-title{font-family:'Playfair Display',serif;font-size:1rem;color:var(--navy);margin-bottom:8px;}
+.fee-scenario .fs-num{font-family:'DM Mono',monospace;font-size:1.5rem;font-weight:500;margin-bottom:4px;}
+.fee-scenario .fs-sub{font-size:.72rem;color:var(--muted);margin-bottom:10px;}
+.fs-row{display:flex;justify-content:space-between;font-size:.77rem;padding:4px 0;border-bottom:1px solid var(--bg2);}
+.fs-row:last-child{border-bottom:none;}
+.fs-row .fs-k{color:var(--muted);}
+.fs-row .fs-v{font-family:'DM Mono',monospace;font-weight:500;}
+.chart-wrap{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin-bottom:1.25rem;}
+.chart-title{font-family:'Playfair Display',serif;font-size:.95rem;color:var(--navy);margin-bottom:1rem;}
+.step-circle{background:var(--blue);color:var(--white);border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;}
+.step-row-sm{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--bg2);}
+.step-row-sm:last-child{border-bottom:none;}
+@media(max-width:640px){.header{padding:1.5rem 1.25rem 0;}.main{padding:1.25rem 1rem;}.compare-grid{grid-template-columns:1fr;}.tab-btn{padding:.75rem 1rem;font-size:.75rem;}.fee-big-number{font-size:2rem;}}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gate-box">
+    <span class="gate-icon">🔒</span>
+    <div class="gate-title">Private Planning Tool</div>
+    <div class="gate-sub">This is a private retirement planning tool.<br>Enter the passphrase to continue.</div>
+    <div class="gate-input-wrap">
+      <input type="password" id="gate-input" placeholder="Enter passphrase" autocomplete="off" onkeydown="if(event.key==='Enter')checkPass()">
+    </div>
+    <button class="gate-btn" onclick="checkPass()">Unlock</button>
+    <div class="gate-error" id="gate-error"></div>
+    <div class="gate-footer">Family retirement planner · Private &amp; confidential</div>
+  </div>
+</div>
+
+<div id="app">
+<div class="header">
+  <div class="header-top">
+    <div class="header-title">
+      <h1>Retirement Income Planner</h1>
+      <p>IRA drawdown · Roth conversion · Advisor fee analysis</p>
+    </div>
+    <div class="header-stats" id="hstats"></div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('decisions')">Key Decisions</button>
+    <button class="tab-btn" onclick="switchTab('ira')">IRA &amp; Roth Strategy</button>
+    <button class="tab-btn" onclick="switchTab('fees')">Advisor Fee Analysis</button>
+    <button class="tab-btn" onclick="switchTab('selfmanage')">Self-Manage Guide</button>
+  </div>
+</div>
+
+<div class="main">
+
+<div class="input-panel">
+  <div class="input-panel-title">Your numbers</div>
+  <div class="inputs-grid">
+    <div class="input-group"><label>Dad's SS (monthly net)</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="i-dss" value="3340" oninput="calculate()"></div><span class="sub-label">Starts Jun 2026</span></div>
+    <div class="input-group"><label>Mom's SS (monthly net)</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="i-mss" value="3044" oninput="calculate()"></div><span class="sub-label">Starts Jun 2027</span></div>
+    <div class="input-group"><label>Portfolio draw (monthly)</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="i-port" value="8000" oninput="calculate()"></div><span class="sub-label">Starts Jun 2026</span></div>
+    <div class="input-group"><label>Income YTD (by June)</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="i-ytd" value="70000" oninput="calculate()"></div><span class="sub-label">Jan–May 2026</span></div>
+    <div class="input-group"><label>Dad's IRA / 401k today</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="i-dira" value="750000" oninput="calculate()"></div><span class="sub-label">Pre-tax balance</span></div>
+    <div class="input-group"><label>Mom's IRA / 401k today</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="i-mira" value="750000" oninput="calculate()"></div><span class="sub-label">Pre-tax balance</span></div>
+    <div class="input-group"><label>IRA growth rate</label><div class="input-wrap no-prefix"><input type="number" id="i-growth" value="6" oninput="calculate()"><span style="position:absolute;right:10px;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);">%</span></div><span class="sub-label">Annual assumption</span></div>
+    <div class="input-group"><label>Advisor fee (annual)</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="i-fee" value="17000" oninput="calculate()"></div><span class="sub-label">Current AUM fee</span></div>
+  </div>
+</div>
+
+<!-- TAB 1: KEY DECISIONS -->
+<div id="tab-decisions" class="tab-content active">
+  <div class="metrics-row" id="td-metrics"></div>
+  <div id="td-alert"></div>
+  <div class="section-title">Urgent — act before December 31, 2026</div>
+  <div id="td-urgent"></div>
+  <div class="section-title" style="margin-top:1.25rem;">Important — within 12 months</div>
+  <div id="td-medium"></div>
+  <div class="section-title" style="margin-top:1.25rem;">Ongoing — before age 73</div>
+  <div id="td-ongoing"></div>
+  <div class="section-title" style="margin-top:1.25rem;">Questions to ask your advisor</div>
+  <div id="td-questions"></div>
+</div>
+
+<!-- TAB 2: IRA & ROTH -->
+<div id="tab-ira" class="tab-content">
+  <div class="metrics-row" id="t2-metrics"></div>
+  <div id="t2-alert"></div>
+  <div class="section-title">Income phase by phase</div>
+  <div class="phase-strip" id="t2-phases"></div>
+  <div class="section-title" style="margin-top:1.25rem;">2026 — the critical year</div>
+  <div class="compare-grid" id="t2-2026"></div>
+  <div class="section-title">IRA growth to RMD age</div>
+  <div class="compare-grid" id="t2-ira"></div>
+  <div class="section-title">Year-by-year income projection</div>
+  <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Phase</th><th class="right">Monthly</th><th class="right">Annual</th><th class="right">Fed tax</th><th class="right">Eff. rate</th><th>IRMAA</th></tr></thead><tbody id="t2-table"></tbody></table></div>
+  <div class="section-title">Roth conversion windows</div>
+  <div class="compare-grid" id="t2-conv"></div>
+  <div class="section-title">Do nothing vs convert</div>
+  <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Metric</th><th class="right">Do nothing</th><th class="right">Convert ~$45k/yr</th></tr></thead><tbody id="t2-compare"></tbody></table></div>
+</div>
+
+<!-- TAB 3: FEES -->
+<div id="tab-fees" class="tab-content">
+  <div id="t3-headline" style="margin-bottom:1.5rem;"></div>
+  <div class="metrics-row" id="t3-metrics"></div>
+  <div class="section-title">What the fee buys</div>
+  <div class="fee-scenario-grid" id="t3-scenarios"></div>
+  <div class="section-title">Fee cost over time</div>
+  <div class="chart-wrap"><div class="chart-title">Cumulative fee drag vs invested alternative (at 6% growth)</div><canvas id="fee-chart" height="280"></canvas></div>
+  <div class="section-title">Year-by-year breakdown</div>
+  <div class="data-table-wrap"><table class="data-table"><thead><tr><th>Year</th><th class="right">Annual fee</th><th class="right">Cumulative</th><th class="right">Opportunity cost</th><th class="right">Portfolio value</th><th class="right">Fee %</th></tr></thead><tbody id="t3-table"></tbody></table></div>
+  <div class="section-title">Break-even</div>
+  <div id="t3-breakeven"></div>
+  <div class="section-title">What to demand for this fee</div>
+  <div id="t3-demands"></div>
+</div>
+
+<!-- TAB 4: SELF-MANAGE -->
+<div id="tab-selfmanage" class="tab-content">
+  <div class="alert info" style="margin-bottom:1.5rem;"><strong>How to self-manage at Fidelity</strong> — Roth conversions, RMDs, rebalancing, and fund selection without paying 1%+ AUM. Estimated time: <strong>4–6 hours per year.</strong></div>
+
+  <div class="section-title">Step 1 — Set up accounts at Fidelity</div>
+  <div class="compare-grid">
+    <div class="compare-card best">
+      <div class="cc-title">Accounts to open</div><div class="cc-sub">All free · no minimums · no fees</div>
+      <div class="cc-row"><span class="cc-k">Traditional IRA</span><span class="cc-v val-amber">Roll 401(k)s here first</span></div>
+      <div class="cc-row"><span class="cc-k">Roth IRA</span><span class="cc-v val-teal">Conversions land here</span></div>
+      <div class="cc-row"><span class="cc-k">Brokerage account</span><span class="cc-v">Taxable investing</span></div>
+      <div class="cc-row"><span class="cc-k">Cash Management</span><span class="cc-v">Checking · ~2.6% yield</span></div>
+      <div class="cc-row"><span class="cc-k">Setup time</span><span class="cc-v val-teal">~30 min online</span></div>
+      <div class="cc-row"><span class="cc-k">401(k) rollover line</span><span class="cc-v">800-343-3548</span></div>
+    </div>
+    <div class="compare-card">
+      <div class="cc-title">Why Fidelity over Vanguard</div><div class="cc-sub">Key differences</div>
+      <div class="cc-row"><span class="cc-k">Roth conversion</span><span class="cc-v val-teal">Online in 10 min</span></div>
+      <div class="cc-row"><span class="cc-k">Roth conversion at Vanguard</span><span class="cc-v val-amber">Requires phone call</span></div>
+      <div class="cc-row"><span class="cc-k">Zero-fee index funds</span><span class="cc-v val-teal">FZROX, FZILX (0.00%)</span></div>
+      <div class="cc-row"><span class="cc-k">RMD auto-calculate</span><span class="cc-v val-teal">Built-in free tool</span></div>
+      <div class="cc-row"><span class="cc-k">Customer service</span><span class="cc-v">24/7 · US-based</span></div>
+      <div class="cc-row"><span class="cc-k">Investor centers</span><span class="cc-v">200+ nationwide</span></div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:1.5rem;">Step 2 — Fund selection (3-fund portfolio)</div>
+  <div class="data-table-wrap"><table class="data-table">
+    <thead><tr><th>Fund</th><th>Ticker</th><th class="right">Expense ratio</th><th class="right">What it holds</th><th class="right">Best account</th><th class="right">Target %</th></tr></thead>
+    <tbody>
+      <tr><td class="label-col">Fidelity ZERO Total Market</td><td><strong>FZROX</strong></td><td class="right val-teal"><strong>0.00%</strong></td><td class="right">All US stocks ~3,000</td><td class="right">Roth or taxable</td><td class="right val-teal"><strong>50–60%</strong></td></tr>
+      <tr><td class="label-col">Fidelity ZERO International</td><td><strong>FZILX</strong></td><td class="right val-teal"><strong>0.00%</strong></td><td class="right">Intl stocks ~2,400</td><td class="right">Roth or taxable</td><td class="right val-amber"><strong>20–30%</strong></td></tr>
+      <tr><td class="label-col">Fidelity US Bond Index</td><td><strong>FXNAX</strong></td><td class="right val-teal"><strong>0.025%</strong></td><td class="right">US bonds (AGG equiv)</td><td class="right val-amber"><strong>Traditional IRA only</strong></td><td class="right"><strong>20–30%</strong></td></tr>
+      <tr><td class="label-col">Fidelity 4-in-1 (simpler option)</td><td><strong>FFNOX</strong></td><td class="right">0.11%</td><td class="right">85/15 stocks + bonds</td><td class="right">Any account</td><td class="right">100% if keeping simple</td></tr>
+      <tr><td class="label-col">Gov Money Market (cash buffer)</td><td><strong>SPAXX</strong></td><td class="right">0.42%</td><td class="right">~4.5% yield</td><td class="right">6–12mo expenses here</td><td class="right">5–10%</td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert info">
+    <strong>Placement rule:</strong> Hold bonds (FXNAX) inside the traditional IRA — bond interest is ordinary income, so sheltering it saves the most. Hold stocks (FZROX/FZILX) in Roth where growth is completely tax-free.
+  </div>
+
+  <div class="section-title" style="margin-top:1.5rem;">Step 3 — Annual rebalancing (every November)</div>
+  <div class="data-table-wrap"><table class="data-table">
+    <thead><tr><th>Step</th><th>Action</th><th class="right">Where</th><th class="right">Time</th></tr></thead>
+    <tbody>
+      <tr><td class="label-col">1</td><td>Log in → Accounts &amp; Trade → Portfolio → Allocation view</td><td class="right">Fidelity.com</td><td class="right">5 min</td></tr>
+      <tr><td class="label-col">2</td><td>Note current % stocks / bonds / cash vs your targets</td><td class="right">Write it down</td><td class="right">2 min</td></tr>
+      <tr><td class="label-col">3</td><td>If any asset class is 5%+ off target — rebalance inside the IRA first (no tax consequence)</td><td class="right">Traditional IRA</td><td class="right">10 min</td></tr>
+      <tr><td class="label-col">4</td><td>In taxable account: only sell positions with losses — buy underweight fund with proceeds</td><td class="right">Brokerage</td><td class="right">10 min</td></tr>
+      <tr><td class="label-col">5</td><td>Check Roth conversion amount for this year and execute (see Decisions tab)</td><td class="right">IRA → Roth convert</td><td class="right">15 min</td></tr>
+    </tbody>
+  </table></div>
+  <div class="alert warn"><strong>Never rebalance taxable by selling winners.</strong> Selling appreciated positions triggers capital gains tax. Only sell in taxable to harvest losses — buy the underweight asset with new money or redirected dividends.</div>
+
+  <div class="section-title" style="margin-top:1.5rem;">Step 4 — How to do a Roth conversion at Fidelity</div>
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem;">
+    <div class="step-row-sm"><div class="step-circle">1</div><div><strong style="font-size:.82rem;">Log in → Accounts &amp; Trade → Transfer → Roth IRA Conversion</strong><div style="font-size:.75rem;color:var(--muted);margin-top:2px;">Select "Roth IRA Conversion" from the transfer type menu</div></div></div>
+    <div class="step-row-sm"><div class="step-circle">2</div><div><strong style="font-size:.82rem;">Choose source account — do Dad's and Mom's separately</strong><div style="font-size:.75rem;color:var(--muted);margin-top:2px;">Each IRA is its own account — convert from each independently, e.g. $22,500 from each = $45,000 total</div></div></div>
+    <div class="step-row-sm"><div class="step-circle">3</div><div><strong style="font-size:.82rem;">Enter dollar amount (not shares)</strong><div style="font-size:.75rem;color:var(--muted);margin-top:2px;">Use the amount from the Decisions tab based on your IRMAA headroom for the year</div></div></div>
+    <div class="step-row-sm"><div class="step-circle" style="background:var(--red);">4</div><div><strong style="font-size:.82rem;">Do NOT withhold taxes from the conversion — say No when asked</strong><div style="font-size:.75rem;color:var(--muted);margin-top:2px;">Pay via IRS estimated payment (IRS.gov/payments) by Jan 15. Withholding from IRA shrinks your Roth and wastes tax-free space.</div></div></div>
+    <div class="step-row-sm"><div class="step-circle">5</div><div><strong style="font-size:.82rem;">Confirm and submit — funds transfer same day</strong><div style="font-size:.75rem;color:var(--muted);margin-top:2px;">You'll receive a 1099-R in January. Report on Form 8606 when filing taxes.</div></div></div>
+    <div class="step-row-sm"><div class="step-circle" style="background:var(--teal);">6</div><div><strong style="font-size:.82rem;">Invest the converted cash immediately in Roth — buy FZROX</strong><div style="font-size:.75rem;color:var(--muted);margin-top:2px;">Money lands as cash in the Roth IRA. Don't leave it idle — buy FZROX so it's compounding tax-free.</div></div></div>
+  </div>
+
+  <div class="section-title" style="margin-top:1.5rem;">Step 5 — RMD management at Fidelity (age 73+)</div>
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem;font-size:.82rem;line-height:1.7;">
+    <p style="margin-bottom:10px;"><strong>Where:</strong> Fidelity.com → Accounts &amp; Trade → Portfolio → RMD Center. Fidelity auto-calculates each January.</p>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div style="display:flex;gap:8px;"><span style="color:var(--teal);font-weight:700;">✓</span><span>Dad and Mom's IRAs each have a separate RMD — calculate and withdraw from each independently</span></div>
+      <div style="display:flex;gap:8px;"><span style="color:var(--teal);font-weight:700;">✓</span><span>Take RMD BEFORE any Roth conversion that year — RMD dollars cannot be converted</span></div>
+      <div style="display:flex;gap:8px;"><span style="color:var(--teal);font-weight:700;">✓</span><span>Set up automatic RMD in October — direct to Fidelity Cash Management checking</span></div>
+      <div style="display:flex;gap:8px;"><span style="color:var(--red);font-weight:700;">✗</span><span>Missing RMD = 25% penalty on missed amount — set Dec 1 calendar reminder as backup every year</span></div>
+      <div style="display:flex;gap:8px;"><span style="color:var(--amber);font-weight:700;">!</span><span>First RMD at 73 can be delayed to April 1 next year — but two hit that year. Usually better to take it in year you turn 73.</span></div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:1.5rem;">Annual calendar</div>
+  <div class="data-table-wrap"><table class="data-table">
+    <thead><tr><th>Month</th><th>Task</th><th class="right">Time</th></tr></thead>
+    <tbody>
+      <tr><td class="label-col">January</td><td>Check RMD Center — confirm amount. Collect 1099-Rs from prior year conversions.</td><td class="right">30 min</td></tr>
+      <tr><td class="label-col">Jan 15</td><td><strong>Pay Q4 estimated tax</strong> if conversion happened Oct–Dec. IRS.gov/payments or Form 1040-ES.</td><td class="right">15 min</td></tr>
+      <tr><td class="label-col">April 15</td><td>File taxes. Report conversion on Form 8606.</td><td class="right">With CPA</td></tr>
+      <tr><td class="label-col">October</td><td>Set up automatic RMD for December. Check YTD income vs $206k IRMAA cliff.</td><td class="right">20 min</td></tr>
+      <tr><td class="label-col">November</td><td><strong>Annual session:</strong> rebalance, harvest losses, decide Roth conversion amount.</td><td class="right">1–2 hrs</td></tr>
+      <tr><td class="label-col">Nov 15</td><td>Execute Roth conversion for the year. Pay estimated tax by Jan 15.</td><td class="right">15 min</td></tr>
+      <tr><td class="label-col">Dec 1</td><td>Confirm RMD has been taken. Don't wait until Dec 31.</td><td class="right">5 min</td></tr>
+      <tr><td class="label-col">Dec 31</td><td>Hard deadline — all RMDs and Roth conversions must settle.</td><td class="right">—</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="section-title" style="margin-top:1.5rem;">What self-managing saves</div>
+  <div class="metrics-row" id="sm-savings"></div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const fm  = n => '$' + Math.round(n).toLocaleString();
+const fmk = n => n >= 1e6 ? '$'+(n/1e6).toFixed(2)+'M' : '$'+Math.round(n/1000)+'k';
+const pct = n => (n*100).toFixed(1)+'%';
+const $   = id => document.getElementById(id);
+function ccRow(k,v,cls=''){return `<div class="cc-row"><span class="cc-k">${k}</span><span class="cc-v ${cls}">${v}</span></div>`;}
+function fsRow(k,v,cls=''){return `<div class="fs-row"><span class="fs-k">${k}</span><span class="fs-v ${cls}">${v}</span></div>`;}
+
+function calcTax(income) {
+  const t=Math.max(0,income-29200);
+  const b=[{r:.10,m:23200},{r:.12,m:94300},{r:.22,m:201050},{r:.24,m:383900},{r:.32,m:999e6}];
+  let tax=0,p=0;
+  for(const br of b){if(t<=p)break;tax+=(Math.min(t,br.m)-p)*br.r;p=br.m;}
+  return Math.round(tax);
+}
+function irmaaInfo(inc){
+  if(inc<206000)return{l:'None',c:'pill-green',cost:0};
+  if(inc<258000)return{l:'Tier 1 +$1,676/yr',c:'pill-amber',cost:1676};
+  if(inc<322000)return{l:'Tier 2 +$4,188/yr',c:'pill-red',cost:4188};
+  return{l:'Tier 3+',c:'pill-red',cost:6700};
+}
+const pi=i=>{const r=irmaaInfo(i);return `<span class="pill ${r.c}">${r.l}</span>`;};
+
+let feeChart=null;
+
+function calculate(){
+  const dss=+$('i-dss').value||0, mss=+$('i-mss').value||0;
+  const port=+$('i-port').value||0, ytd=+$('i-ytd').value||0;
+  const dira=+$('i-dira').value||0, mira=+$('i-mira').value||0;
+  const gr=(+$('i-growth').value||6)/100, fee=+$('i-fee').value||17000;
+
+  const portYr=port*12, dyrF=dss*12, myrF=mss*12;
+  const dtx=dyrF*.85, mtx=myrF*.85, btx=dtx+mtx;
+
+  const inc26=ytd+dss*7+port*7, tax26=calcTax(ytd+dss*7*.85+port*7);
+  const room26=Math.max(0,206000-inc26-5000);
+  const p1mo=dss+port, p1yr=p1mo*12, p1tax=calcTax(dtx+portYr);
+  const p2mo=dss+mss+port, p2yr=p2mo*12, p2tax=calcTax(btx+portYr);
+  const room27=Math.max(0,206000-p2yr-5000);
+
+  const dAt73=dira*Math.pow(1+gr,6), mAt73=mira*Math.pow(1+gr,8);
+  const dRMD=Math.round(dAt73/26.5), mRMD=Math.round(mAt73/26.5);
+
+  const p3mo=dss+mss+port+Math.round(dRMD/12), p3yr=p3mo*12, p3tax=calcTax(btx+portYr+dRMD);
+  const dAt75=Math.max((dAt73-dRMD)*(1+gr)-dRMD,0)*(1+gr);
+  const dRMD75=Math.round(dAt75/24.6);
+  const p4mo=dss+mss+port+Math.round(dRMD75/12)+Math.round(mRMD/12);
+  const p4yr=p4mo*12, p4tax=calcTax(btx+portYr+dRMD75+mRMD);
+  const p4irm=irmaaInfo(p4yr);
+
+  // ── HEADER ───────────────────────────────────────────────────────────────
+  $('header-stats').innerHTML=`
+    <div class="hstat"><div class="val">${fm(inc26)}</div><div class="lbl">2026 gross income</div></div>
+    <div class="hstat"><div class="val">${fm(room26)}</div><div class="lbl">conversion room</div></div>
+    <div class="hstat"><div class="val">${fm(p4mo)}/mo</div><div class="lbl">peak monthly (2034)</div></div>
+  `;
+
+  const convAmt=Math.min(room26,50000), convTax=Math.round(convAmt*.22);
+  const lifeSav=Math.max(Math.round((p4tax-calcTax(btx+portYr+(dRMD75+mRMD)*.82))*15),0);
+
+  // HEADER
+  $('hstats').innerHTML=`
+    <div class="hstat"><div class="val">${fm(inc26)}</div><div class="lbl">2026 income</div></div>
+    <div class="hstat"><div class="val">${fm(room26)}</div><div class="lbl">conversion room</div></div>
+    <div class="hstat"><div class="val">${fm(p4mo)}/mo</div><div class="lbl">peak 2034</div></div>`;
+
+  // ── TAB 1: KEY DECISIONS ──────────────────────────────────────────────────
+  $('td-metrics').innerHTML=`
+    <div class="metric-card danger"><div class="m-label">Urgent decisions</div><div class="m-value">2</div><div class="m-sub">Act before Dec 31</div></div>
+    <div class="metric-card"><div class="m-label">Tax at stake (est.)</div><div class="m-value">${fmk(lifeSav)}</div><div class="m-sub">Lifetime if done right</div></div>
+    <div class="metric-card danger"><div class="m-label">2026 conversion deadline</div><div class="m-value">Dec 31</div><div class="m-sub">${fm(room26)} headroom left</div></div>
+    <div class="metric-card"><div class="m-label">IRMAA headroom 2026</div><div class="m-value val-amber">${fm(room26)}</div><div class="m-sub">Before $206k cliff</div></div>
+    <div class="metric-card ${room27<25000?'danger':''}"><div class="m-label">IRMAA room 2027+</div><div class="m-value ${room27<25000?'val-red':'val-amber'}">${fm(room27)}</div><div class="m-sub">After both SS active</div></div>
+    <div class="metric-card ${p4irm.cost>0?'danger':'good-card'}"><div class="m-label">Peak IRMAA (2034)</div><div class="m-value ${p4irm.cost>0?'val-red':'val-teal'}">${fm(p4irm.cost)}/yr</div><div class="m-sub">${p4irm.l}</div></div>`;
+
+  $('td-alert').innerHTML=`<div class="alert ${inc26>190000?'bad':'info'}" style="margin-bottom:1.25rem;">
+    <strong>${inc26>190000?'Warning: close to IRMAA cliff.':'2026 conversion window is open.'}</strong>
+    2026 income of ${fm(inc26)} leaves ${fm(room26)} of room before the $206,000 IRMAA cliff.
+    A conversion of up to ${fm(convAmt_)} at 22% costs ~${fm(convTax_)} — paid from outside the IRA.
+    After June 2027 both SS checks arrive and this window shrinks to only ${fm(room27)}.
+  </div>`;
+
+  $('td-urgent').innerHTML=`
+    <div class="decision-card urgent">
+      <div class="d-head"><div class="d-title">Do a Roth conversion before December 31, 2026</div><span class="pill pill-red">Deadline: Dec 31</span></div>
+      <div class="d-body">With ${fm(inc26)} in 2026 gross income there is ${fm(room26)} of room before the IRMAA cliff.
+      Converting ${fm(convAmt_)} costs ${fm(convTax_)} in tax at 22% — paid from cash outside the IRA.
+      After June 2027 both SS checks raise the income floor and this window shrinks to only ${fm(room27)}.</div>
+      <div class="d-amounts">
+        <div class="d-amt"><div class="lbl">Recommended amount</div><div class="val">${fm(convAmt_)}</div></div>
+        <div class="d-amt"><div class="lbl">Tax cost</div><div class="val" style="color:var(--amber);">~${fm(convTax_)}</div></div>
+        <div class="d-amt"><div class="lbl">From each IRA</div><div class="val">${fm(Math.round(convAmt_/2))}</div></div>
+        <div class="d-amt"><div class="lbl">Lifetime savings est.</div><div class="val" style="color:var(--teal);">~${fmk(lifeSav)}</div></div>
+      </div>
+    </div>
+    <div class="decision-card urgent">
+      <div class="d-head"><div class="d-title">Confirm your advisor is executing this conversion</div><span class="pill pill-red">Ask this week</span></div>
+      <div class="d-body">One question: "What is our 2026 Roth conversion amount and which accounts?"
+      If they don't have a specific dollar figure, that is the gap the ${fm(fee)}/yr fee is supposed to cover.
+      If nothing is planned yet, push for it immediately — weeks remain in 2026.</div>
+      <div class="d-amounts">
+        <div class="d-amt"><div class="lbl">Fee being paid</div><div class="val">${fm(fee)}/yr</div></div>
+        <div class="d-amt"><div class="lbl">Value if not doing this</div><div class="val" style="color:var(--red);">~$0</div></div>
+        <div class="d-amt"><div class="lbl">Value if they are</div><div class="val" style="color:var(--teal);">Justified</div></div>
+      </div>
+    </div>`;
+
+  $('td-medium').innerHTML=`
+    <div class="decision-card medium">
+      <div class="d-head"><div class="d-title">Decide on portfolio draw for 2027+</div><span class="pill pill-amber">Before Jun 2027</span></div>
+      <div class="d-body">At ${fm(port)}/mo draw + both SS checks, annual income hits ${fm(p2yr)} — only ${fm(room27)} under the IRMAA cliff.
+      Every $1,000/mo reduction opens $12,000/yr of conversion room.
+      At $6,000/mo the room opens to ~${fm(Math.max(0,206000-(dss+mss+6000)*12-5000))}/yr.</div>
+      <div class="d-amounts">
+        <div class="d-amt"><div class="lbl">Current draw</div><div class="val">${fm(port)}/mo</div></div>
+        <div class="d-amt"><div class="lbl">IRMAA room now</div><div class="val" style="color:${room27<25000?'var(--red)':'var(--amber)'};">${fm(room27)}/yr</div></div>
+        <div class="d-amt"><div class="lbl">Room at $6k/mo</div><div class="val" style="color:var(--teal);">${fm(Math.max(0,206000-(dss+mss+6000)*12-5000))}/yr</div></div>
+      </div>
+    </div>
+    <div class="decision-card medium">
+      <div class="d-head"><div class="d-title">Roll any old 401(k)s into a single traditional IRA</div><span class="pill pill-amber">Before Dad turns 73</span></div>
+      <div class="d-body">If old employer 401(k)s exist, roll them directly to a traditional IRA at Fidelity.
+      Simplifies RMD calculation, enables online Roth conversions, consolidates management.
+      Call Fidelity at 800-343-3548 — direct rollover takes ~2 weeks.</div>
+    </div>`;
+
+  $('td-ongoing').innerHTML=`
+    <div class="decision-card low">
+      <div class="d-head"><div class="d-title">Run a fresh conversion analysis every November through Dad's age 72</div><span class="pill pill-green">6-year window</span></div>
+      <div class="d-body">Every November: check YTD income, calculate IRMAA room, decide conversion amount, execute by Nov 15, pay estimated tax by Jan 15.
+      Amount changes year to year based on dividends and capital gains — model fresh each year.</div>
+    </div>
+    <div class="decision-card low">
+      <div class="d-head"><div class="d-title">Set up automatic RMDs at Fidelity before Dad turns 73 (2032)</div><span class="pill pill-green">Before 2032</span></div>
+      <div class="d-body">Dad IRA at 73: ~${fmk(dAt73)} → ${fm(dRMD)}/yr forced withdrawal (${fm(Math.round(dRMD/12))}/mo).
+      Mom IRA at 73: ~${fmk(mAt73)} → ${fm(mRMD)}/yr (${fm(Math.round(mRMD/12))}/mo). Each account distributes separately.</div>
+    </div>`;
+
+  $('td-questions').innerHTML=[
+    ['What is our 2026 Roth conversion amount and which accounts?',`Specific number expected — no number = fee not being earned`],
+    ['Have you modeled our RMDs at ages 73 and 75?',`Dad ${fm(dRMD)}/yr · Mom ${fm(mRMD)}/yr stacked on income`],
+    ['Are you checking our IRMAA exposure before each conversion?',`2026 cliff is ${fm(206000-inc26)} away`],
+    ['What are our fund expense ratios?','Anything over 0.5% is too high — index funds under 0.1%'],
+    ['Are you tax-loss harvesting in taxable accounts?','Should happen every November in flat or down years'],
+  ].map(([q,a],i)=>`
+    <div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:${i<4?'1px solid var(--bg2)':'none'};">
+      <div style="color:var(--blue);font-size:1.1rem;min-width:18px;font-weight:700;line-height:1.3;">?</div>
+      <div><div style="font-size:.83rem;font-weight:500;color:var(--text);margin-bottom:2px;">${q}</div>
+      <div style="font-size:.75rem;color:var(--muted);">${a}</div></div>
+    </div>`).join('')+'<div style="height:8px;"></div>';
+
+  // ── TAB 1 (IRA): METRICS ────────────────────────────────────────────────
+  $('t1-metrics').innerHTML=`
+    <div class="metric-card highlight"><div class="m-label">Total IRA today</div><div class="m-value">${fmk(dira+mira)}</div><div class="m-sub">Pre-tax · never been taxed</div></div>
+    <div class="metric-card ${irmaaInfo(inc26).cost>0?'danger':''}"><div class="m-label">2026 gross income</div><div class="m-value ${irmaaInfo(inc26).cost>0?'val-red':''}">${fm(inc26)}</div><div class="m-sub">IRMAA: ${irmaaInfo(inc26).l}</div></div>
+    <div class="metric-card"><div class="m-label">2026 conversion room</div><div class="m-value val-amber">${fm(room26)}</div><div class="m-sub">Before IRMAA cliff</div></div>
+    <div class="metric-card danger"><div class="m-label">Peak monthly (2034)</div><div class="m-value val-red">${fm(p4mo)}/mo</div><div class="m-sub">${fm(p4yr)}/yr · both RMDs active</div></div>
+    <div class="metric-card danger"><div class="m-label">Combined RMDs at peak</div><div class="m-value val-red">${fm(dRMD+mRMD)}/yr</div><div class="m-sub">Forced · fully taxable</div></div>
+    <div class="metric-card"><div class="m-label">IRMAA at peak</div><div class="m-value ${p4irm.cost>0?'val-red':'val-teal'}">${fm(p4irm.cost)}/yr</div><div class="m-sub">${p4irm.l}</div></div>
+  `;
+    // ── TAB 2: IRA & ROTH ────────────────────────────────────────────────────
+  $('t2-metrics').innerHTML=`
+    <div class="metric-card highlight"><div class="m-label">Total IRA today</div><div class="m-value">${fmk(dira+mira)}</div><div class="m-sub">Pre-tax · never taxed</div></div>
+    <div class="metric-card ${irmaaInfo(inc26).cost>0?'danger':''}"><div class="m-label">2026 gross income</div><div class="m-value ${irmaaInfo(inc26).cost>0?'val-red':''}">${fm(inc26)}</div><div class="m-sub">${irmaaInfo(inc26).l}</div></div>
+    <div class="metric-card"><div class="m-label">2026 conversion room</div><div class="m-value val-amber">${fm(room26)}</div><div class="m-sub">Before IRMAA cliff</div></div>
+    <div class="metric-card danger"><div class="m-label">Peak monthly (2034)</div><div class="m-value val-red">${fm(p4mo)}/mo</div><div class="m-sub">${fm(p4yr)}/yr</div></div>
+    <div class="metric-card danger"><div class="m-label">Combined RMDs at peak</div><div class="m-value val-red">${fm(dRMD+mRMD)}/yr</div><div class="m-sub">Forced · fully taxable</div></div>
+    <div class="metric-card ${p4irm.cost>0?'danger':'good-card'}"><div class="m-label">IRMAA at peak</div><div class="m-value ${p4irm.cost>0?'val-red':'val-teal'}">${fm(p4irm.cost)}/yr</div><div class="m-sub">${p4irm.l}</div></div>`;
+
+  $('t2-alert').innerHTML=`<div class="alert warn" style="margin-bottom:1.25rem;">
+    <strong>2026 is the most important conversion year.</strong> With ${fm(inc26)} gross income, ${fm(room26)} of room before $206k IRMAA cliff.
+    Converting ${fm(convAmt)} at 22% costs ~${fm(convTax)} — from outside the IRA.
+    After 2027 when both SS checks arrive, room shrinks to ${fm(room27)}.
+  </div>`;
+
+  $('t2-phases').innerHTML=[
+    {l:'2026',s:'YTD + draw',mo:Math.round(inc26/8),col:'#1A5FA8'},
+    {l:'Jun 2026→Jun 2027',s:'Dad SS + draw',mo:p1mo,col:'#2E7CC4'},
+    {l:'Jun 2027→Dad 73',s:'Both SS + draw',mo:p2mo,col:'#5B9FE8'},
+    {l:'Dad 73 · 2032',s:'Dad RMD begins',mo:p3mo,col:'#EF9F27'},
+    {l:'Mom 73 · 2034',s:'Both RMDs',mo:p4mo,col:'#9B1C1C'},
+  ].map(p=>`<div class="phase-cell" style="background:${p.col};color:#fff;"><div class="pc-label">${p.l}</div><div class="pc-val">${fm(p.mo)}/mo</div><div class="pc-sub">${p.s}</div></div>`).join('');
+
+  $('t2-2026').innerHTML=`
+    <div class="compare-card worst">
+      <div class="cc-title">2026 income breakdown</div><div class="cc-sub">YTD ${fm(ytd)} · draw starts June</div>
+      ${ccRow('Jan–May YTD',fm(ytd),'val-red')}${ccRow('Dad SS Jun–Dec (7mo)',fm(dss*7),'val-blue')}
+      ${ccRow('Portfolio draw Jun–Dec',fm(port*7),'val-amber')}${ccRow('Mom SS','not yet','')}
+      ${ccRow('Total gross income',fm(inc26),'val-red')}${ccRow('Est. federal tax',fm(tax26)+'/yr','val-red')}
+      ${ccRow('IRMAA risk',irmaaInfo(inc26).l,irmaaInfo(inc26).cost>0?'val-amber':'val-teal')}
+    </div>
+    <div class="compare-card best">
+      <div class="cc-title">2026 Roth conversion plan</div><div class="cc-sub">Do this before December 31</div>
+      ${ccRow('2026 income',fm(inc26),'val-amber')}${ccRow('IRMAA cliff','$206,000','')}
+      ${ccRow('Safe room',fm(room26),'val-teal')}${ccRow('Recommended',fm(convAmt),'val-teal')}
+      ${ccRow('Tax cost','~'+fm(convTax),'val-amber')}
+      ${ccRow('Income after conversion','~'+fm(inc26+convAmt),irmaaInfo(inc26+convAmt).cost>0?'val-red':'val-teal')}
+      ${ccRow('IRMAA after',irmaaInfo(inc26+convAmt).l,irmaaInfo(inc26+convAmt).cost>0?'val-red':'val-teal')}
+    </div>`;
+
+  $('t2-ira').innerHTML=`
+    <div class="compare-card">
+      <div class="cc-title">Dad's IRA — age 67 → 73</div><div class="cc-sub">6 years at ${(gr*100).toFixed(0)}% growth</div>
+      ${ccRow('Today',fm(dira),'')}${ccRow('At 73',fmk(dAt73),'val-amber')}
+      ${ccRow('IRS factor','26.5','')}${ccRow('Year-1 RMD',fm(dRMD)+'/yr','val-red')}
+      ${ccRow('Monthly',fm(Math.round(dRMD/12))+'/mo','val-red')}
+    </div>
+    <div class="compare-card">
+      <div class="cc-title">Mom's IRA — age 65 → 73</div><div class="cc-sub">8 years at ${(gr*100).toFixed(0)}% growth</div>
+      ${ccRow('Today',fm(mira),'')}${ccRow('At 73',fmk(mAt73),'val-amber')}
+      ${ccRow('IRS factor','26.5','')}${ccRow('Year-1 RMD',fm(mRMD)+'/yr','val-red')}
+      ${ccRow('Monthly',fm(Math.round(mRMD/12))+'/mo','val-red')}
+    </div>`;
+
+  $('t2-table').innerHTML=[
+    {label:'Today → Jun 2026',mo:port,yr:port*5,tax:calcTax(port*5),note:'Portfolio only'},
+    {label:'Jun 2026 → Jun 2027',mo:p1mo,yr:p1yr,tax:p1tax,note:'Dad SS + draw'},
+    {label:'Jun 2027 → Dad 73',mo:p2mo,yr:p2yr,tax:p2tax,note:'Both SS + draw'},
+    {label:'Dad 73 (2032)',mo:p3mo,yr:p3yr,tax:p3tax,note:'Dad RMD begins'},
+    {label:'Mom 73 (2034)',mo:p4mo,yr:p4yr,tax:p4tax,note:'Both RMDs · peak'},
+  ].map(p=>`<tr>
+    <td class="label-col">${p.label}<br><span style="font-size:.68rem;color:var(--muted);">${p.note}</span></td>
+    <td class="right">${fm(p.mo)}</td>
+    <td class="right ${p.yr>172000?'val-red':p.yr>130000?'val-amber':''}">${fm(p.yr)}</td>
+    <td class="right">${fm(p.tax)}</td>
+    <td class="right">${p.yr>0?pct(p.tax/p.yr):''}</td>
+    <td>${pi(p.yr)}</td></tr>`).join('');
+
+  $('t2-conv').innerHTML=`
+    <div class="compare-card best">
+      <div class="cc-title">2026 — convert now</div><div class="cc-sub">Best window · expires Dec 31</div>
+      ${ccRow('Income',fm(inc26),'val-amber')}${ccRow('IRMAA cliff','$206,000','')}
+      ${ccRow('Safe room',fm(room26),'val-teal')}${ccRow('Max conversion',fm(convAmt),'val-teal')}
+      ${ccRow('Rate','22%','val-amber')}${ccRow('IRMAA risk','None','val-teal')}
+    </div>
+    <div class="compare-card worst">
+      <div class="cc-title">2027+ — very tight</div><div class="cc-sub">Both SS + draw · only ${fm(room27)} headroom</div>
+      ${ccRow('Income (both SS)',fm(p2yr),'val-red')}${ccRow('IRMAA cliff','$206,000','')}
+      ${ccRow('Safe room',fm(room27),'val-red')}${ccRow('Max safe conversion',fm(Math.max(room27-3000,0))+'/yr','val-amber')}
+      ${ccRow('Rate','22%','val-amber')}${ccRow('At $6k/mo draw',fm(Math.max(0,206000-(dss+mss+6000)*12-5000))+' room','val-teal')}
+    </div>`;
+
+  const cIRA73d=dAt73*.82,cIRA73m=mAt73*.82,cRMDd=Math.round(cIRA73d/26.5),cRMDm=Math.round(cIRA73m/26.5);
+  const cPeak=p4yr-(dRMD+mRMD)*.18,cPeakTax=calcTax(btx+portYr+(dRMD+mRMD)*.82);
+  $('t2-compare').innerHTML=[
+    ['Combined IRA at Dad 73',fmk(dAt73+mAt73),fmk(cIRA73d+cIRA73m)],
+    ['Combined year-1 RMDs',fm(dRMD+mRMD)+'/yr',fm(cRMDd+cRMDm)+'/yr'],
+    ['Peak monthly income',fm(p4mo)+'/mo',fm(Math.round(cPeak/12))+'/mo'],
+    ['Peak annual income',fm(p4yr)+'/yr',fm(Math.round(cPeak))+'/yr'],
+    ['Peak federal tax',fm(p4tax)+'/yr',fm(cPeakTax)+'/yr'],
+    ['IRMAA surcharge/yr',fm(p4irm.cost),fm(irmaaInfo(Math.round(cPeak)).cost)],
+    ['Roth built (tax-free)','$0','~'+fmk((dira+mira)*.18*Math.pow(1+gr,5))],
+    ['Est. 20-yr federal tax','~'+fmk(p4tax*17),'~'+fmk(cPeakTax*17)],
+    ['Lifetime tax savings','—','~'+fmk((p4tax-cPeakTax)*17)],
+  ].map(([l,a,b])=>`<tr><td class="label-col">${l}</td><td class="right val-red">${a}</td><td class="right val-teal">${b}</td></tr>`).join('');
+
+  // ── TAB 3: FEES ─────────────────────────────────────────────────────────
+  const pv0=dira+mira+200000, fpct=(fee/pv0*100).toFixed(2);
+  $('t3-headline').innerHTML=`
+    <div style="background:var(--navy);border-radius:12px;padding:1.5rem 2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+      <div><div style="font-size:.72rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Annual advisor fee</div>
+        <div class="fee-big-number">${fm(fee)}<span>/yr</span></div>
+        <div style="font-size:.8rem;color:rgba(255,255,255,.5);margin-top:4px;">${fpct}% of estimated portfolio · standard 0.5–1.0%</div>
+      </div>
+      <div style="text-align:right;"><div style="font-size:.72rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">20-year total</div>
+        <div style="font-family:'DM Mono',monospace;font-size:2rem;color:var(--gold);font-weight:500;">${fm(fee*20)}</div>
+        <div style="font-size:.8rem;color:rgba(255,255,255,.5);margin-top:4px;">Before opportunity cost</div>
+      </div>
+    </div>`;
+
+  const opc20=((()=>{let t=0;for(let i=0;i<20;i++)t=(t+fee)*1.06;return Math.round(t-fee*20);}))();
+  $('t3-metrics').innerHTML=`
+    <div class="metric-card danger"><div class="m-label">Annual fee</div><div class="m-value val-red">${fm(fee)}</div><div class="m-sub">${fpct}% AUM</div></div>
+    <div class="metric-card danger"><div class="m-label">10-year cost</div><div class="m-value val-red">${fm(fee*10)}</div><div class="m-sub">Fees only</div></div>
+    <div class="metric-card danger"><div class="m-label">20-year cost</div><div class="m-value val-red">${fm(fee*20)}</div><div class="m-sub">Fees only</div></div>
+    <div class="metric-card danger"><div class="m-label">Opportunity cost 20yr</div><div class="m-value val-red">${fmk(opc20)}</div><div class="m-sub">If fee invested at 6%</div></div>
+    <div class="metric-card highlight"><div class="m-label">Break-even needed</div><div class="m-value">${fm(fee)}/yr</div><div class="m-sub">Min value to justify</div></div>
+    <div class="metric-card good-card"><div class="m-label">Fee-only alternative</div><div class="m-value val-teal">$2k–$5k</div><div class="m-sub">Annual review</div></div>`;
+
+  const tvE=8000+6500+p4irm.cost*.5, nvE=tvE-fee;
+  $('t3-scenarios').innerHTML=`
+    <div class="fee-scenario"><div class="fs-tag" style="color:var(--red);">❌ Asset mgmt only</div>
+      <div class="fs-title">No tax planning</div><div class="fs-num val-red">${fm(fee)}/yr</div><div class="fs-sub">Zero optimization</div>
+      ${fsRow('Roth conversions','Not done')}${fsRow('RMD planning','Not modeled')}
+      ${fsRow('IRMAA mgmt','Not tracked')}${fsRow('Value delivered','~$0–$2,000')}
+      ${fsRow('Net value',fm(-fee+1500),'val-red')}
+    </div>
+    <div class="fee-scenario rec"><div class="fs-tag" style="color:var(--teal);">✓ Full tax planning</div>
+      <div class="fs-title">Active management</div><div class="fs-num val-teal">${fm(fee)}/yr</div><div class="fs-sub">Roth + RMD + IRMAA</div>
+      ${fsRow('Roth conversions','~$8,000 saved')}${fsRow('RMD reduction','~$6,500/yr')}
+      ${fsRow('IRMAA avoidance','~'+fm(Math.round(p4irm.cost*.5))+'/yr')}
+      ${fsRow('Total value','~'+fm(Math.round(tvE)))}
+      ${fsRow('Net value',fm(Math.round(nvE)),nvE>=0?'val-teal':'val-red')}
+    </div>
+    <div class="fee-scenario"><div class="fs-tag" style="color:var(--blue);">Alternative: Fee-only</div>
+      <div class="fs-title">Fiduciary retainer</div><div class="fs-num val-blue">$2k–$5k/yr</div><div class="fs-sub">Pay for advice only</div>
+      ${fsRow('Annual plan review','Included')}${fsRow('Roth analysis','Included')}
+      ${fsRow('RMD projection','Included')}${fsRow('Execution','DIY at Fidelity')}
+      ${fsRow('Savings vs current',fm(fee-3500)+'/yr','val-teal')}
+    </div>`;
+
+  const yrs=Array.from({length:21},(_,i)=>i);
+  const cF=yrs.map(y=>fee*y);
+  const oC=yrs.map(y=>{let t=0;for(let i=0;i<y;i++)t=(t+fee)*1.06;return Math.round(t-fee*y);});
+  const tD=yrs.map((_,i)=>cF[i]+oC[i]);
+  const fA=yrs.map(y=>3500*y);
+
+  if(feeChart)feeChart.destroy();
+  feeChart=new Chart($('fee-chart').getContext('2d'),{
+    type:'line',
+    data:{labels:yrs.map(y=>`Yr ${y}`),datasets:[
+      {label:'Cumulative fees',data:cF,borderColor:'#9B1C1C',backgroundColor:'rgba(155,28,28,.06)',borderWidth:2,pointRadius:0,tension:.3,fill:true},
+      {label:'Fees + opportunity cost',data:tD,borderColor:'#C4922A',borderDash:[5,3],borderWidth:2,pointRadius:0,tension:.3,fill:false},
+      {label:'Fee-only ($3,500/yr)',data:fA,borderColor:'#0A6E56',borderWidth:2,pointRadius:0,tension:.3,fill:false},
+    ]},
+    options:{responsive:true,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{font:{family:'DM Sans',size:11},color:'#6B6760',boxWidth:12}},
+      tooltip:{backgroundColor:'#0C2340',callbacks:{label:c=>' '+c.dataset.label+': $'+Math.round(c.raw).toLocaleString()}}},
+      scales:{
+        x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:'DM Sans',size:10},color:'#6B6760',maxTicksLimit:11}},
+        y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:'DM Mono',size:10},color:'#6B6760',callback:v=>'$'+Math.round(v/1000)+'k'}}
+      }
+    }
+  });
+
+  let pv=pv0;
+  $('t3-table').innerHTML=Array.from({length:20},(_,i)=>{
+    const yr=i+1,cf=fee*yr;
+    let oc=0;for(let j=0;j<yr;j++)oc=(oc+fee)*1.06;oc=Math.round(oc-cf);
+    pv*=1.06;
+    return `<tr><td class="label-col">Year ${yr} (${2025+yr})</td><td class="right">${fm(fee)}</td>
+    <td class="right val-red">${fm(cf)}</td><td class="right val-amber">${fm(oc)}</td>
+    <td class="right">${fmk(pv)}</td><td class="right">${(fee/pv*100).toFixed(2)}%</td></tr>`;
+  }).join('');
+
+  $('t3-breakeven').innerHTML=`
+    <div class="alert info" style="margin-bottom:8px;"><strong>Break-even:</strong> The advisor must generate at least ${fm(fee)}/yr above what a low-cost index portfolio achieves to justify the fee.</div>
+    <div class="alert ${nvE>=0?'good':'bad'}"><strong>Verdict:</strong> ${nvE>=0
+      ?`Actively managing Roth conversions, RMDs, and IRMAA delivers ~${fm(Math.round(tvE))}/yr — net positive ~${fm(Math.round(nvE))} after fee.`
+      :`If only managing asset allocation, value is ~$1,500–$2,000/yr — net loss of ~${fm(Math.round(Math.abs(nvE)))} after fee. A fee-only fiduciary at $2,000–$5,000/yr is likely better.`}
+    </div>`;
+
+  $('t3-demands').innerHTML=[
+    ['✓','Annual Roth conversion plan with specific dollar amount','High — $5,000–$10,000/yr value',true],
+    ['✓','RMD projection showing income stack at ages 73 and 75','High — prevents $85k+ surprise',true],
+    ['✓','IRMAA check before every conversion','High — saves $1,676–$4,188/yr',true],
+    ['✓','Tax-loss harvesting in taxable accounts','Medium — $2,000–$4,000 in down years',false],
+    ['✓','Social Security timing verification','Medium — one-time value',false],
+    ['○','Asset allocation rebalancing only','Low — Fidelity does this free',false],
+  ].map(([ic,t,v,hi],i)=>`
+    <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:${i<5?'1px solid var(--bg2)':'none'};">
+      <div style="font-size:1rem;width:20px;text-align:center;color:${i<5?'var(--teal)':'var(--muted)'};">${ic}</div>
+      <div style="flex:1;font-size:.82rem;color:var(--text);">${t}</div>
+      <div style="font-size:.75rem;color:${hi?'var(--teal)':i<5?'var(--amber)':'var(--muted)'};font-weight:500;text-align:right;min-width:160px;">${v}</div>
+    </div>`).join('');
+
+  // SELF-MANAGE SAVINGS
+  const aS=fee-3500;
+  $('sm-savings').innerHTML=`
+    <div class="metric-card good-card"><div class="m-label">Annual savings</div><div class="m-value val-teal">${fm(aS)}/yr</div><div class="m-sub">Self-manage + $3,500 CPA</div></div>
+    <div class="metric-card good-card"><div class="m-label">10-year savings</div><div class="m-value val-teal">${fm(aS*10)}</div><div class="m-sub">Kept in portfolio</div></div>
+    <div class="metric-card good-card"><div class="m-label">20-year fees avoided</div><div class="m-value val-teal">${fm(fee*20)}</div><div class="m-sub">Before opportunity cost</div></div>
+    <div class="metric-card highlight"><div class="m-label">Time required</div><div class="m-value">4–6 hrs/yr</div><div class="m-sub">Mostly in November</div></div>`;
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active',(i===0&&tab==='decisions')||(i===1&&tab==='ira')||(i===2&&tab==='fees')||(i===3&&tab==='selfmanage'));
+  });
+  ['decisions','ira','fees','selfmanage'].forEach(t=>{
+    const el=document.getElementById('tab-'+t);
+    if(el)el.classList.toggle('active',t===tab);
+  });
+}
+
+function hashStr(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return Math.abs(h).toString(16).padStart(8,'0');}
+const CORRECT=hashStr('Shope');
+
+function checkPass(){
+  const inp=document.getElementById('gate-input'), err=document.getElementById('gate-error');
+  if(hashStr(inp.value.trim())===CORRECT){
+    const g=document.getElementById('gate');
+    g.style.transition='opacity .5s ease';g.style.opacity='0';
+    setTimeout(()=>{g.style.display='none';document.getElementById('app').style.display='block';calculate();},500);
+    sessionStorage.setItem('rp_auth',CORRECT);
+  }else{
+    inp.classList.add('error');err.textContent='Incorrect passphrase. Try again.';inp.value='';
+    setTimeout(()=>inp.classList.remove('error'),400);
+  }
+}
+
+(function(){
+  if(sessionStorage.getItem('rp_auth')===CORRECT){
+    document.getElementById('gate').style.display='none';
+    document.getElementById('app').style.display='block';
+    calculate();
+  }
+  setTimeout(()=>{const i=document.getElementById('gate-input');if(i)i.focus();},100);
+})();
+</script>
+</body>
+</html>
